@@ -26,7 +26,8 @@ def summarise(lines):
         s["requests"] += 1
         s[f"{str(entry['status'])[0]}xx"] = s.get(f"{str(entry['status'])[0]}xx", 0) + 1
         if entry["status"] >= 400:
-            s["paths"][f"{entry['status']} {entry['path']}"] += 1
+            # An empty path is a TLS probe (like the certificate checks) that never sent a request
+            s["paths"][f"{entry['status']} {entry['path'] or '(TLS probe)'}"] += 1
     summary = {}
     for name, s in sorted(servers.items()):
         summary[name] = {
