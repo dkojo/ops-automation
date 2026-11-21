@@ -43,8 +43,8 @@ docker compose exec -T web2 touch /usr/share/nginx/html/down
 
 # Some traffic: mostly fine, a few missing pages and server errors
 for port in 8441 8442 8443; do
-  for i in $(seq 1 40); do curl -sk -o /dev/null "https://localhost:$port/"; done
-  for i in $(seq 1 4); do curl -sk -o /dev/null "https://localhost:$port/missing-page"; done
+  for _ in $(seq 1 40); do curl -sk -o /dev/null "https://localhost:$port/"; done
+  for _ in $(seq 1 4); do curl -sk -o /dev/null "https://localhost:$port/missing-page"; done
   curl -sk -o /dev/null "https://localhost:$port/error"
 done
 echo "Fleet up: web1 healthy, web2 stuck, web3 with an expiring certificate and a drifted config"
