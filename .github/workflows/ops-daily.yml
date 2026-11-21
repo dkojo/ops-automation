@@ -1,0 +1,52 @@
+name: ops-daily
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # every morning at 06:00 UTC, like a real ops job
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Test the automation
+        run: |
+          shellcheck scripts/*.sh
+          python3 -m unittest discover -s tests -v
+
+      # Three nginx servers with problems planted on purpose: a stuck app, an expiring certificate, a drifted config
+      - name: Start the fleet
+        run: bash scripts/seed_fleet.sh
+
+      - name: Container lifecycle
+        run: bash scripts/container_lifecycle.sh
+
+      - name: Certificate rotation
+        run: bash scripts/rotate_certs.sh
+
+      - name: Log parsing
+        run: python3 scripts/parse_logs.py
+
+      - name: Compliance check
+        run: python3 scripts/compliance.py
+
+      - name: Ops report
+        if: always()
+        run: python3 scripts/report.py || true
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ops-report
+          path: report/
+          if-no-files-found: ignore

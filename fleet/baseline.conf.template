@@ -1,0 +1,34 @@
+# The approved baseline every server in the fleet must run. compliance.py renders it for each server
+# (replacing SERVER_NAME) whenever a server has drifted from it.
+log_format ops_json escape=json '{"time":"$time_iso8601","server":"SERVER_NAME","status":$status,"path":"$uri","bytes":$body_bytes_sent,"rt":$request_time}';
+
+server {
+    listen 80;
+    access_log off;
+
+    # Health check: returns 503 while the "down" flag file exists, like a stuck app
+    location = /health {
+        if (-f /usr/share/nginx/html/down) { return 503; }
+        return 200 "ok\n";
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name SERVER_NAME;
+    access_log /var/log/nginx/access.log ops_json;
+
+    ssl_certificate     /etc/nginx/tls/server.crt;
+    ssl_certificate_key /etc/nginx/tls/server.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    server_tokens       off;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+    }
+    location = /error {
+        return 500;
+    }
+}

@@ -1,0 +1,30 @@
+# A small fleet of three web servers. scripts/seed_fleet.sh writes each one's config and certificate
+# into fleet/run/<name>/ before this starts, including the problems the automation has to find.
+x-web: &web
+  image: nginx:1.30.7-alpine
+  command: ["sh", "-c", "rm -f /usr/share/nginx/html/down && exec nginx -g 'daemon off;'"]
+  healthcheck:
+    test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health"]
+    interval: 3s
+    timeout: 2s
+    retries: 2
+
+services:
+  web1:
+    <<: *web
+    ports: ["8441:443"]
+    volumes:
+      - ./fleet/run/web1/conf.d:/etc/nginx/conf.d
+      - ./fleet/run/web1/tls:/etc/nginx/tls
+  web2:
+    <<: *web
+    ports: ["8442:443"]
+    volumes:
+      - ./fleet/run/web2/conf.d:/etc/nginx/conf.d
+      - ./fleet/run/web2/tls:/etc/nginx/tls
+  web3:
+    <<: *web
+    ports: ["8443:443"]
+    volumes:
+      - ./fleet/run/web3/conf.d:/etc/nginx/conf.d
+      - ./fleet/run/web3/tls:/etc/nginx/tls
