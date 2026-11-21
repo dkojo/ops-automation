@@ -50,7 +50,7 @@ Each run starts a fleet of three nginx servers with problems planted on purpose,
 ## See weakened standards fail the run
 
 Open the pull request **demo/weak-baseline**. It adds TLS 1.1 back into the approved baseline itself.
-The compliance check re-applies the baseline to every server, finds they're all still non-compliant, and fails the run. The policy protects the baseline, not just the servers.
+It never reaches a server: the unit test `test_the_baseline_itself_is_compliant` runs the compliance policy against the template, fails, and stops the run at **Test the automation**. The policy protects the baseline, not just the servers.
 
 ## Run it on your machine
 
